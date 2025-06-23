@@ -1,0 +1,48 @@
+name: Build and Deploy Backend
+
+on:
+  push:
+    paths:
+      - "todo_api/**"
+    branches: [main]
+
+env:
+  AZURE_CONTAINER_REGISTRY: <your-acr-name>.azurecr.io
+  IMAGE_NAME: todo-api
+  RESOURCE_GROUP: <your-resource-group>
+  CLUSTER_NAME: <your-aks-name>
+  NAMESPACE: default
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to ACR
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ env.AZURE_CONTAINER_REGISTRY }}
+          username: ${{ secrets.AZURE_CLIENT_ID }}
+          password: ${{ secrets.AZURE_CLIENT_SECRET }}
+
+      - name: Build and Push Docker image
+        run: |
+          docker build -t $AZURE_CONTAINER_REGISTRY/$IMAGE_NAME:${{ github.sha }} ./todo_api
+          docker push $AZURE_CONTAINER_REGISTRY/$IMAGE_NAME:${{ github.sha }}
+
+      - name: Set up AKS credentials
+        uses: azure/aks-set-context@v3
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          cluster-name: ${{ env.CLUSTER_NAME }}
+          resource-group: ${{ env.RESOURCE_GROUP }}
+
+      - name: Deploy to AKS
+        run: |
+          kubectl set image deployment/todo-api todo-api=$AZURE_CONTAINER_REGISTRY/$IMAGE_NAME:${{ github.sha }} -n $NAMESPACE
