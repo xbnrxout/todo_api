@@ -1,19 +1,32 @@
 require("dotenv").config();
 const express = require("express");
-const connectToDatabase = require("./db/mongoose");
 
-const todoRoutes = require("./routes/todo   ");
+const connectToDatabase = require("./db/mongoose");
 
 const app = express();
 app.use(express.json());
 
+const errorHandler = require("./middleware/errorHandler");
+const authenticateJWT = require("./middleware/auth");
+const requireRole = require("./middleware/role");
+
+const todoRoutes = require("./routes/todo");
+const authRoutes = require("./routes/auth");
+const adminRoutes = require("./routes/admin");
+
+app.use(errorHandler);
+
+// Apply JWT auth middleware to all /api/v1/todos requests
+app.get("/health", (req, res) => res.send("OK"));
+app.use("/api/v1", authRoutes);
+app.use("/api/v1/admin", authenticateJWT, requireRole("admin"), adminRoutes);
+app.use("/api/v1/todos", authenticateJWT, todoRoutes);
+
+// Global error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: "Internal Server Error" });
 });
-
-// Mount the todos routes at /api/v1/todos
-app.use("/api/v1/todos", todoRoutes);
 
 const PORT = process.env.PORT || 5050;
 
