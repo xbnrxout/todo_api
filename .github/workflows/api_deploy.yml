@@ -1,0 +1,48 @@
+name: Deploy Backend to AKS
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  ACR_NAME: todoregistryxyz
+  RESOURCE_GROUP: todo-rg-dev
+  AKS_CLUSTER_NAME: todo-aks
+  CONTAINER_NAME: backend
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Login to Azure with OIDC
+        uses: azure/login@v1
+        with:
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build and Push Docker Image
+        run: |
+          az acr login --name $ACR_NAME
+          docker build -t $ACR_NAME.azurecr.io/$CONTAINER_NAME:${{ github.sha }} .
+          docker push $ACR_NAME.azurecr.io/$CONTAINER_NAME:${{ github.sha }}
+
+      - name: Set AKS context
+        run: |
+          az aks get-credentials --resource-group $RESOURCE_GROUP --name $AKS_CLUSTER_NAME --overwrite-existing
+
+      - name: Deploy to AKS
+        run: |
+          kubectl set image deployment/backend backend=$ACR_NAME.azurecr.io/$CONTAINER_NAME:${{ github.sha }}
