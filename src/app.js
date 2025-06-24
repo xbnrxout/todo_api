@@ -30,8 +30,22 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5050;
 
-connectToDatabase().then(() => {
+async function startServer() {
+  try {
+    await connectToDatabase();
+    console.log("Connected to MongoDB");
+  } catch (err) {
+    console.warn("[!] MongoDB connection failed. Continuing without DB.");
+  }
+
   app.listen(PORT, () => {
     console.log(`Server started on port ${PORT}`);
   });
-});
+}
+
+startServer();
+// connectToDatabase().then(() => {
+//   app.listen(PORT, () => {
+//     console.log(`Server started on port ${PORT}`);
+//   });
+// });

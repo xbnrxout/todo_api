@@ -1,22 +1,16 @@
 FROM node:20-alpine
 
-# Install essential extras for Alpine if needed
-RUN apk add --no-cache libc6-compat
-
+# Set working directory
 WORKDIR /app
 
-# Copy manifest and install dependencies
-COPY package*.json ./
-RUN npm ci --production
+# Copy full project (includes package.json, src/, etc.)
+COPY . .
 
-# Copy application code
-COPY src ./src
+# Install dependencies
+RUN npm ci --omit=dev
 
-# Explicit runtime environment
-ENV NODE_ENV=production
+# Expose the backend port
+EXPOSE 5050
 
-# Expose HTTP port
-EXPOSE 8000
-
-# Launch the application
+# Start the application
 CMD ["node", "src/app.js"]

@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: todo-backend
+  template:
+    metadata:
+      labels:
+        app: todo-backend
+    spec:
+      containers:
+        - name: todo-backend
+          image: todoregistryxyz.azurecr.io/todo-backend:latest
+          ports:
+            - containerPort: 5050
+          env:
+            - name: PORT
+              value: "5050"
+            - name: MONGO_URI
+              value: "<REPLACE_LATER>"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: todo-backend
+spec:
+  selector:
+    app: todo-backend
+  ports:
+    - port: 5050
+      targetPort: 5050
+  type: ClusterIP
