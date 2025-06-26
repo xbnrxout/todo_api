@@ -4,6 +4,11 @@ const authenticateJWT = require("../middleware/auth");
 
 const router = express.Router();
 
+router.use((req, res, next) => {
+  console.log("[ROUTE HIT] /api/v1/todos", req.method, req.url);
+  next();
+});
+
 router.use(authenticateJWT);
 
 // Create a todo

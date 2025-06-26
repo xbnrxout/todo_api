@@ -1,0 +1,31 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: todo-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+spec:
+  tls:
+    - hosts:
+        - 130.107.11.119
+      secretName: todo-tls
+  rules:
+    - host: 130.107.11.119
+      http:
+        paths:
+          - path: /api(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: todo-backend
+                port:
+                  number: 5050
+          - path: /(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: todo-frontend
+                port:
+                  number: 80

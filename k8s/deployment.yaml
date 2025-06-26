@@ -14,14 +14,20 @@ spec:
     spec:
       containers:
         - name: todo-backend
-          image: todoregistryxyz.azurecr.io/todo-backend:latest
+          image: todoacr0123456789.azurecr.io/todo-backend:latest
           ports:
             - containerPort: 5050
           env:
             - name: PORT
               value: "5050"
             - name: MONGO_URI
-              value: "<REPLACE_LATER>"
+              value: "mongodb://todo-cosmosdb-alt:xFi52IZ4TapIsuuOR8XymulWctE4F2VA0iukJ50WOfxyDVR6MA7ytwOdoEy6eUuvrN6E4TkZwBQ0ACDbxSSiqA==@todo-cosmosdb-alt.mongo.cosmos.azure.com:10255/?ssl=true&replicaSet=globaldb&retrywrites=false&maxIdleTimeMS=120000&appName=@todo-cosmosdb-alt@"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: JWT_SECRET
+
 ---
 apiVersion: v1
 kind: Service
